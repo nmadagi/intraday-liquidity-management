@@ -168,26 +168,26 @@ def forecast_forward(
         freq=f"{freq_minutes}min",
     )
 
-    # Build seasonal profile as fallback (median by dow + hour + minute)
+    # Build seasonal profile (median + std by dow + hour + minute)
     hist = last_known_df[["timestamp", target_col]].copy()
     hist["timestamp"] = pd.to_datetime(hist["timestamp"])
     hist["_dow"] = hist["timestamp"].dt.dayofweek
     hist["_hour"] = hist["timestamp"].dt.hour
     hist["_minute"] = hist["timestamp"].dt.minute
     seasonal = hist.groupby(["_dow", "_hour", "_minute"])[target_col].median().to_dict()
+    seasonal_std_dict = hist.groupby(["_dow", "_hour", "_minute"])[target_col].std().to_dict()
+
+    last_known_date = last_ts.date()
 
     # Working history — only business-hour data (no zeros to pollute rolling calcs)
     work = last_known_df[["timestamp", target_col]].copy()
     work["timestamp"] = pd.to_datetime(work["timestamp"])
 
-    # Keep only business hour rows in work history
     biz_mask = (work["timestamp"].dt.hour >= 6) & (work["timestamp"].dt.hour <= 18) & (work["timestamp"].dt.dayofweek < 5)
     work = work[biz_mask].copy().reset_index(drop=True)
 
     predictions = []
     for ts in future_timestamps:
-        # Non-business hours: zero forecast — do NOT append to work so overnight
-        # zeros never enter the rolling feature window.
         if ts.dayofweek >= 5 or ts.hour < 6 or ts.hour > 18:
             predictions.append({"timestamp": ts, "forecast": 0, "lower": 0, "upper": 0})
             continue
@@ -195,31 +195,39 @@ def forecast_forward(
         seasonal_key = (ts.dayofweek, ts.hour, ts.minute)
         seasonal_val = seasonal.get(seasonal_key, 0)
 
-        # Placeholder uses the seasonal median instead of 0, so roll_mean_4 /
-        # roll_std_4 etc. see a realistic value rather than a zero that would
-        # suppress the model output for the entire next business day.
-        seed_val = seasonal_val if abs(seasonal_val) > 1000 else (
-            work[target_col].iloc[-1] if len(work) else 0
-        )
-        placeholder = pd.DataFrame([{"timestamp": ts, target_col: seed_val}])
-        work_tmp = pd.concat([work, placeholder], ignore_index=True)
+        if ts.date() > last_known_date:
+            # Beyond the current day: use seasonal baseline directly
+            yhat = seasonal_val
+            s_std = seasonal_std_dict.get(seasonal_key, abs(seasonal_val) * 0.5)
+            if np.isnan(s_std) or s_std == 0:
+                s_std = abs(seasonal_val) * 0.5 if seasonal_val != 0 else 100_000
+            lower = yhat - 1.96 * s_std
+            upper = yhat + 1.96 * s_std
+        else:
+            # Same day: ML model with rolling features from actual history
+            seed_val = seasonal_val if abs(seasonal_val) > 1000 else (
+                work[target_col].iloc[-1] if len(work) else 0
+            )
+            placeholder = pd.DataFrame([{"timestamp": ts, target_col: seed_val}])
+            work_tmp = pd.concat([work, placeholder], ignore_index=True)
 
-        feat = engineer_features(work_tmp, target_col)
-        last_row = feat.iloc[-1:]
+            feat = engineer_features(work_tmp, target_col)
+            X = feat.iloc[-1:][FEATURE_COLS].values
+            yhat = model.predict(X)[0]
 
-        X = last_row[FEATURE_COLS].values
-        yhat = model.predict(X)[0]
+            if abs(yhat) < abs(seasonal_val) * 0.1 and abs(seasonal_val) > 1000:
+                yhat = 0.3 * yhat + 0.7 * seasonal_val
 
-        # Seasonal fallback: blend when model is implausibly near-zero
-        if abs(yhat) < abs(seasonal_val) * 0.1 and abs(seasonal_val) > 1000:
-            yhat = 0.3 * yhat + 0.7 * seasonal_val
+            recent_std = work[target_col].iloc[-32:].std() if len(work) > 32 else work[target_col].std()
+            if np.isnan(recent_std) or recent_std == 0:
+                recent_std = abs(seasonal_val) * 0.5 if seasonal_val != 0 else 100_000
+            lower = yhat - 1.96 * recent_std
+            upper = yhat + 1.96 * recent_std
 
-        # Confidence interval from recent business-hour history only
-        recent_std = work[target_col].iloc[-32:].std() if len(work) > 32 else work[target_col].std()
-        if np.isnan(recent_std) or recent_std == 0:
-            recent_std = abs(seasonal_val) * 0.5 if seasonal_val != 0 else 100_000
-        lower = yhat - 1.96 * recent_std
-        upper = yhat + 1.96 * recent_std
+            work = pd.concat(
+                [work, pd.DataFrame([{"timestamp": ts, target_col: yhat}])],
+                ignore_index=True,
+            )
 
         predictions.append({
             "timestamp": ts,
@@ -227,12 +235,6 @@ def forecast_forward(
             "lower": lower,
             "upper": upper,
         })
-
-        # Only business-hour predictions go back into work history
-        work = pd.concat(
-            [work, pd.DataFrame([{"timestamp": ts, target_col: yhat}])],
-            ignore_index=True,
-        )
 
     return pd.DataFrame(predictions)
 
