@@ -97,8 +97,10 @@ def load_data():
     return pmt_df, bal_df
 
 
+_MODEL_VERSION = "v2.1-hybrid-seasonal"  # Change this to force retrain on deploy
+
 @st.cache_resource(show_spinner="Training forecasting model...")
-def train_model(bal_csv_path):
+def train_model(bal_csv_path, _version=_MODEL_VERSION):
     bal_df = pd.read_csv(bal_csv_path, parse_dates=["timestamp"])
     model, feat_df, metrics, importance = train_forecast_model(bal_df, target_col="total_net")
     return model, feat_df, metrics, importance
@@ -419,6 +421,8 @@ with tab4:
     with col_train:
         st.markdown("#### Model Training")
         if st.button("Train / Retrain Model", type="primary"):
+            # Clear cached model so it retrains with latest forecasting.py code
+            train_model.clear()
             st.session_state["model_trained"] = True
     with col_forecast:
         st.write("")  # spacer
