@@ -157,8 +157,10 @@ def forecast_forward(
     """
     Generate forward forecast by iteratively predicting one step ahead.
     Uses the last known data to bootstrap lag/rolling features.
+
+    Key fix: overnight hours are NOT appended to the working history,
+    so rolling features stay clean for next-day business hours.
     """
-    # Start from last known timestamp
     last_ts = pd.to_datetime(last_known_df["timestamp"].iloc[-1])
     future_timestamps = pd.date_range(
         last_ts + pd.Timedelta(minutes=freq_minutes),
@@ -166,38 +168,53 @@ def forecast_forward(
         freq=f"{freq_minutes}min",
     )
 
-    # Build a working copy with history for feature computation
+    # Build seasonal profile as fallback (median by dow + hour + minute)
+    hist = last_known_df[["timestamp", target_col]].copy()
+    hist["timestamp"] = pd.to_datetime(hist["timestamp"])
+    hist["_dow"] = hist["timestamp"].dt.dayofweek
+    hist["_hour"] = hist["timestamp"].dt.hour
+    hist["_minute"] = hist["timestamp"].dt.minute
+    seasonal = hist.groupby(["_dow", "_hour", "_minute"])[target_col].median().to_dict()
+
+    # Working history — only business-hour data (no zeros to pollute rolling calcs)
     work = last_known_df[["timestamp", target_col]].copy()
     work["timestamp"] = pd.to_datetime(work["timestamp"])
 
+    # Keep only business hour rows in work history
+    biz_mask = (work["timestamp"].dt.hour >= 6) & (work["timestamp"].dt.hour <= 18) & (work["timestamp"].dt.dayofweek < 5)
+    work = work[biz_mask].copy().reset_index(drop=True)
+
     predictions = []
     for ts in future_timestamps:
-        # Skip weekends
-        if ts.dayofweek >= 5:
+        # Non-business hours: zero forecast, don't append to work
+        if ts.dayofweek >= 5 or ts.hour < 6 or ts.hour > 18:
             predictions.append({"timestamp": ts, "forecast": 0, "lower": 0, "upper": 0})
-            work = pd.concat([work, pd.DataFrame([{"timestamp": ts, target_col: 0}])], ignore_index=True)
             continue
 
-        # Outside trading hours — record zero but use NaN in the work buffer so rolling
-        # calculations over the overnight gap aren't polluted by artificial zeros.
-        if ts.hour < 6 or ts.hour > 18:
-            predictions.append({"timestamp": ts, "forecast": 0, "lower": 0, "upper": 0})
-            work = pd.concat([work, pd.DataFrame([{"timestamp": ts, target_col: float("nan")}])], ignore_index=True)
-            continue
+        # Business hours: predict using model
+        # Temporarily append a placeholder row so features compute for this timestamp
+        placeholder = pd.DataFrame([{"timestamp": ts, target_col: 0}])
+        work_tmp = pd.concat([work, placeholder], ignore_index=True)
 
-        # Engineer features on the working set, excluding overnight NaN rows from
-        # rolling calculations so they don't flatten the next day's predictions.
-        work_clean = work.dropna(subset=[target_col])
-        feat = engineer_features(work_clean, target_col)
+        feat = engineer_features(work_tmp, target_col)
         last_row = feat.iloc[-1:]
 
         X = last_row[FEATURE_COLS].values
         yhat = model.predict(X)[0]
 
-        # Confidence interval (based on rolling residual std)
-        residual_std = feat[target_col].iloc[-32:].std() if len(feat) > 32 else feat[target_col].std()
-        lower = yhat - 1.96 * residual_std
-        upper = yhat + 1.96 * residual_std
+        # If model predicts near-zero (stale features), use seasonal fallback
+        seasonal_key = (ts.dayofweek, ts.hour, ts.minute)
+        seasonal_val = seasonal.get(seasonal_key, 0)
+        if abs(yhat) < abs(seasonal_val) * 0.1 and abs(seasonal_val) > 1000:
+            # Model is under-predicting, blend with seasonal
+            yhat = 0.3 * yhat + 0.7 * seasonal_val
+
+        # Confidence interval
+        recent_std = work[target_col].iloc[-32:].std() if len(work) > 32 else work[target_col].std()
+        if np.isnan(recent_std) or recent_std == 0:
+            recent_std = abs(seasonal_val) * 0.5 if seasonal_val != 0 else 100000
+        lower = yhat - 1.96 * recent_std
+        upper = yhat + 1.96 * recent_std
 
         predictions.append({
             "timestamp": ts,
@@ -206,7 +223,7 @@ def forecast_forward(
             "upper": upper,
         })
 
-        # Append prediction as "known" for next iteration
+        # Append prediction to work history for next iteration
         new_row = pd.DataFrame([{"timestamp": ts, target_col: yhat}])
         work = pd.concat([work, new_row], ignore_index=True)
 

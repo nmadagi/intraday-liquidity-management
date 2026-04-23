@@ -414,93 +414,137 @@ with tab4:
     st.subheader("ML Forecasting Engine — Net Flow Prediction")
     st.caption("GradientBoosting model with 30+ engineered features (calendar, cyclical, rolling, lagged)")
 
-    col_train, col_forecast = st.columns([1, 2])
+    col_train, col_forecast = st.columns([1, 3])
 
     with col_train:
         st.markdown("#### Model Training")
         if st.button("Train / Retrain Model", type="primary"):
             st.session_state["model_trained"] = True
+    with col_forecast:
+        st.write("")  # spacer
 
     if st.session_state.get("model_trained", False):
         model, feat_df, metrics, importance = train_model("idl_balance_series.csv")
 
-        with col_train:
-            st.metric("Train MAE", f"${metrics['train_mae']/1e6:.2f}M",
-                      help="Average prediction error on training data — how well the model learned historical patterns")
-            st.metric("Test MAE", f"${metrics['test_mae']/1e6:.2f}M",
-                      help="Average prediction error on unseen data — the real measure of forecast accuracy in production")
-            st.metric("Test RMSE", f"${metrics['test_rmse']/1e6:.2f}M",
-                      help="Penalizes large errors more than MAE — shows worst-case forecast misses during unusual events")
-            st.metric("Train/Test Split", f"{metrics['train_size']:,} / {metrics['test_size']:,}",
-                      help="85% data for training, 15% held out for testing — time-based split, no data leakage")
+        # Feature descriptions
+        _feature_desc = {
+            "roll_mean_4": "Avg net flow over last 1hr — strongest momentum signal",
+            "roll_std_4": "Flow volatility over last 1hr — drives confidence interval width",
+            "roll_max_4": "Largest single flow in last 1hr — detects recent payment spikes",
+            "roll_min_4": "Smallest flow in last 1hr — flags recent large outflows",
+            "lag_2d": "Net flow at this exact time 2 days ago — captures multi-day rhythm",
+            "minute_of_day": "Position in trading day (0→1) — 10AM behaves differently than 3PM",
+            "roll_std_8": "Flow volatility over last 2hrs — broader volatility context",
+            "roll_mean_8": "Avg net flow over last 2hrs — medium-term trend direction",
+            "roll_mean_32": "Avg net flow over last 8hrs — full-day directional bias",
+            "minute": "Minute within the hour (0/15/30/45) — sub-hour activity patterns",
+            "roll_mean_16": "Avg net flow over last 4hrs — half-day trend",
+            "roll_max_8": "Largest flow in last 2hrs — extended spike detection",
+            "roll_min_8": "Smallest flow in last 2hrs — extended outflow detection",
+            "roll_max_16": "Largest flow in last 4hrs",
+            "roll_min_16": "Smallest flow in last 4hrs",
+            "roll_std_16": "Volatility over last 4hrs",
+            "roll_max_32": "Largest flow in last 8hrs",
+            "roll_min_32": "Smallest flow in last 8hrs",
+            "roll_std_32": "Volatility over last 8hrs",
+            "lag_1d": "Net flow at this time yesterday",
+            "lag_5d": "Net flow at this time last week — weekly seasonality",
+            "hour": "Hour of day (6-18)",
+            "day_of_week": "Day of week (0=Mon, 4=Fri)",
+            "day_of_month": "Day of month — month-end proximity",
+            "month": "Month of year",
+            "is_monday": "Monday flag — typically lighter volumes",
+            "is_friday": "Friday flag — typically lighter volumes",
+            "is_month_end": "Last business day of month — 40-60% volume surge",
+            "days_to_month_end": "Days until month end — gradual ramp-up",
+            "is_quarter_end": "Quarter-end flag — extra volume on top of month-end",
+            "hour_sin": "Cyclical hour encoding (sine) — captures periodicity",
+            "hour_cos": "Cyclical hour encoding (cosine) — captures periodicity",
+            "dow_sin": "Cyclical day-of-week encoding (sine)",
+            "dow_cos": "Cyclical day-of-week encoding (cosine)",
+            "cum_daily_net": "Cumulative net flow so far today — intraday position",
+        }
 
-            st.markdown("**Top Features**")
-            _feature_descriptions = {
-                "roll_mean_4":   "Avg net flow over last 1 hour — strongest signal for near-term momentum",
-                "roll_std_4":    "Flow volatility over last 1 hour — widens confidence intervals when high",
-                "roll_max_4":    "Largest single flow in last 1 hour — detects recent payment spikes",
-                "roll_min_4":    "Smallest flow in last 1 hour — detects recent large outflows",
-                "lag_2d":        "Net flow at this exact time 2 days ago — captures weekly rhythm",
-                "minute_of_day": "Position in trading day (0-1) — 10 AM behaves differently than 3 PM",
-                "roll_std_8":    "Flow volatility over last 2 hours — broader volatility context",
-                "roll_mean_8":   "Avg net flow over last 2 hours — medium-term trend signal",
-                "roll_mean_32":  "Avg net flow over last 8 hours — captures full-day directional trend",
-                "minute":        "Minute within the hour (0/15/30/45) — some intervals are busier",
-            }
-            importance_display = importance.head(10).copy()
-            importance_display["description"] = importance_display["feature"].map(
-                lambda f: _feature_descriptions.get(f, "")
-            )
-            st.dataframe(
-                importance_display.style.format({"importance": "{:.4f}"}),
-                use_container_width=True, hide_index=True,
-                column_config={"description": st.column_config.TextColumn("Description", width="large")},
-            )
+        # Metrics row — 4 columns with help tooltips
+        st.markdown("#### Model Performance")
+        m1, m2, m3, m4 = st.columns(4)
+        m1.metric(
+            "Train MAE", f"${metrics['train_mae']/1e6:.2f}M",
+            help="Average prediction error on training data — how well the model learned historical patterns"
+        )
+        m2.metric(
+            "Test MAE", f"${metrics['test_mae']/1e6:.2f}M",
+            help="Average prediction error on unseen data — the real measure of forecast accuracy in production"
+        )
+        m3.metric(
+            "Test RMSE", f"${metrics['test_rmse']/1e6:.2f}M",
+            help="Penalizes large errors more than MAE — shows worst-case forecast misses during unusual events like month-end"
+        )
+        m4.metric(
+            "Train/Test Split", f"{metrics['train_size']:,} / {metrics['test_size']:,}",
+            help="85% data for training, 15% held out for testing — time-based split so no future data leaks into training"
+        )
 
-        with col_forecast:
-            horizon = st.slider("Forecast Horizon (15-min steps)", 16, 96, 48, step=8, key="fc_horizon")
+        st.divider()
 
-            with st.spinner("Generating forecast..."):
-                fc = forecast_forward(model, bal_df, horizon_steps=horizon)
+        # Forecast chart
+        horizon = st.slider("Forecast Horizon (15-min steps)", 16, 96, 48, step=8, key="fc_horizon")
 
-            # Plot
-            fig_fc = go.Figure()
+        with st.spinner("Generating forecast..."):
+            fc = forecast_forward(model, bal_df, horizon_steps=horizon)
 
-            # Historical (last 200 points)
-            hist_tail = bal_df.tail(200)
-            fig_fc.add_trace(go.Scatter(
-                x=hist_tail["timestamp"], y=hist_tail["total_net"],
-                name="Historical Net Flow",
-                line=dict(color="#4FC3F7", width=1),
-            ))
+        fig_fc = go.Figure()
 
-            # Forecast
-            fig_fc.add_trace(go.Scatter(
-                x=fc["timestamp"], y=fc["forecast"],
-                name="ML Forecast",
-                line=dict(color="#FFA726", width=2),
-            ))
+        hist_tail = bal_df.tail(200)
+        fig_fc.add_trace(go.Scatter(
+            x=hist_tail["timestamp"], y=hist_tail["total_net"],
+            name="Historical Net Flow",
+            line=dict(color="#4FC3F7", width=1),
+        ))
 
-            # Confidence interval
-            fig_fc.add_trace(go.Scatter(
-                x=pd.concat([fc["timestamp"], fc["timestamp"][::-1]]),
-                y=pd.concat([fc["upper"], fc["lower"][::-1]]),
-                fill="toself", fillcolor="rgba(255,167,38,0.15)",
-                line=dict(width=0),
-                name="95% CI",
-            ))
+        fig_fc.add_trace(go.Scatter(
+            x=fc["timestamp"], y=fc["forecast"],
+            name="ML Forecast",
+            line=dict(color="#FFA726", width=2),
+        ))
 
-            fig_fc.update_layout(
-                title="Net Flow: Historical + ML Forecast",
-                yaxis_title="USD",
-                height=450,
-                template="plotly_dark",
-            )
-            st.plotly_chart(fig_fc, use_container_width=True)
+        fig_fc.add_trace(go.Scatter(
+            x=pd.concat([fc["timestamp"], fc["timestamp"][::-1]]),
+            y=pd.concat([fc["upper"], fc["lower"][::-1]]),
+            fill="toself", fillcolor="rgba(255,167,38,0.15)",
+            line=dict(width=0),
+            name="95% CI",
+        ))
 
-            # Store forecast in session for use in stress/playbook tabs
-            st.session_state["forecast_df"] = fc
-            st.session_state["model"] = model
+        fig_fc.update_layout(
+            title="Net Flow: Historical + ML Forecast",
+            yaxis_title="USD",
+            height=450,
+            template="plotly_dark",
+        )
+        st.plotly_chart(fig_fc, use_container_width=True)
+
+        # Store forecast in session for use in stress/playbook tabs
+        st.session_state["forecast_df"] = fc
+        st.session_state["model"] = model
+
+        # Feature importance — full width with descriptions
+        st.markdown("#### Top Features — What Drives the Forecast")
+        imp_display = importance.head(10).copy()
+        imp_display["description"] = imp_display["feature"].map(_feature_desc).fillna("")
+        imp_display["importance"] = imp_display["importance"].apply(lambda x: f"{x:.4f} ({x*100:.1f}%)")
+        imp_display.columns = ["Feature", "Importance", "What It Captures"]
+
+        st.dataframe(
+            imp_display,
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                "Feature": st.column_config.TextColumn(width="medium"),
+                "Importance": st.column_config.TextColumn(width="small"),
+                "What It Captures": st.column_config.TextColumn(width="large"),
+            },
+        )
     else:
         st.info("Click **Train / Retrain Model** to build the forecasting model.")
 
