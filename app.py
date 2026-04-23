@@ -97,10 +97,8 @@ def load_data():
     return pmt_df, bal_df
 
 
-_MODEL_VERSION = "v2.1-hybrid-seasonal"  # Change this to force retrain on deploy
-
-@st.cache_resource(show_spinner="Training forecasting model...")
-def train_model(bal_csv_path, _version=_MODEL_VERSION):
+def train_model(bal_csv_path):
+    """Train model fresh each session — ensures latest forecasting.py is always used."""
     bal_df = pd.read_csv(bal_csv_path, parse_dates=["timestamp"])
     model, feat_df, metrics, importance = train_forecast_model(bal_df, target_col="total_net")
     return model, feat_df, metrics, importance
@@ -421,14 +419,19 @@ with tab4:
     with col_train:
         st.markdown("#### Model Training")
         if st.button("Train / Retrain Model", type="primary"):
-            # Clear cached model so it retrains with latest forecasting.py code
-            train_model.clear()
+            # Force fresh train
+            st.session_state.pop("cached_model", None)
             st.session_state["model_trained"] = True
     with col_forecast:
         st.write("")  # spacer
 
     if st.session_state.get("model_trained", False):
-        model, feat_df, metrics, importance = train_model("idl_balance_series.csv")
+        # Cache in session_state so we don't retrain on every tab switch
+        if "cached_model" not in st.session_state:
+            with st.spinner("Training forecasting model..."):
+                result = train_model("idl_balance_series.csv")
+                st.session_state["cached_model"] = result
+        model, feat_df, metrics, importance = st.session_state["cached_model"]
 
         # Feature descriptions
         _feature_desc = {
