@@ -425,15 +425,36 @@ with tab4:
         model, feat_df, metrics, importance = train_model("idl_balance_series.csv")
 
         with col_train:
-            st.metric("Train MAE", f"${metrics['train_mae']/1e6:.2f}M")
-            st.metric("Test MAE", f"${metrics['test_mae']/1e6:.2f}M")
-            st.metric("Test RMSE", f"${metrics['test_rmse']/1e6:.2f}M")
-            st.metric("Train/Test Split", f"{metrics['train_size']:,} / {metrics['test_size']:,}")
+            st.metric("Train MAE", f"${metrics['train_mae']/1e6:.2f}M",
+                      help="Average prediction error on training data — how well the model learned historical patterns")
+            st.metric("Test MAE", f"${metrics['test_mae']/1e6:.2f}M",
+                      help="Average prediction error on unseen data — the real measure of forecast accuracy in production")
+            st.metric("Test RMSE", f"${metrics['test_rmse']/1e6:.2f}M",
+                      help="Penalizes large errors more than MAE — shows worst-case forecast misses during unusual events")
+            st.metric("Train/Test Split", f"{metrics['train_size']:,} / {metrics['test_size']:,}",
+                      help="85% data for training, 15% held out for testing — time-based split, no data leakage")
 
             st.markdown("**Top Features**")
+            _feature_descriptions = {
+                "roll_mean_4":   "Avg net flow over last 1 hour — strongest signal for near-term momentum",
+                "roll_std_4":    "Flow volatility over last 1 hour — widens confidence intervals when high",
+                "roll_max_4":    "Largest single flow in last 1 hour — detects recent payment spikes",
+                "roll_min_4":    "Smallest flow in last 1 hour — detects recent large outflows",
+                "lag_2d":        "Net flow at this exact time 2 days ago — captures weekly rhythm",
+                "minute_of_day": "Position in trading day (0-1) — 10 AM behaves differently than 3 PM",
+                "roll_std_8":    "Flow volatility over last 2 hours — broader volatility context",
+                "roll_mean_8":   "Avg net flow over last 2 hours — medium-term trend signal",
+                "roll_mean_32":  "Avg net flow over last 8 hours — captures full-day directional trend",
+                "minute":        "Minute within the hour (0/15/30/45) — some intervals are busier",
+            }
+            importance_display = importance.head(10).copy()
+            importance_display["description"] = importance_display["feature"].map(
+                lambda f: _feature_descriptions.get(f, "")
+            )
             st.dataframe(
-                importance.head(10).style.format({"importance": "{:.4f}"}),
+                importance_display.style.format({"importance": "{:.4f}"}),
                 use_container_width=True, hide_index=True,
+                column_config={"description": st.column_config.TextColumn("Description", width="large")},
             )
 
         with col_forecast:

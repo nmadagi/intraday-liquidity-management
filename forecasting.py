@@ -178,14 +178,17 @@ def forecast_forward(
             work = pd.concat([work, pd.DataFrame([{"timestamp": ts, target_col: 0}])], ignore_index=True)
             continue
 
-        # Skip outside trading hours (before 6 AM or after 7 PM)
+        # Outside trading hours — record zero but use NaN in the work buffer so rolling
+        # calculations over the overnight gap aren't polluted by artificial zeros.
         if ts.hour < 6 or ts.hour > 18:
             predictions.append({"timestamp": ts, "forecast": 0, "lower": 0, "upper": 0})
-            work = pd.concat([work, pd.DataFrame([{"timestamp": ts, target_col: 0}])], ignore_index=True)
+            work = pd.concat([work, pd.DataFrame([{"timestamp": ts, target_col: float("nan")}])], ignore_index=True)
             continue
 
-        # Engineer features on the working set
-        feat = engineer_features(work, target_col)
+        # Engineer features on the working set, excluding overnight NaN rows from
+        # rolling calculations so they don't flatten the next day's predictions.
+        work_clean = work.dropna(subset=[target_col])
+        feat = engineer_features(work_clean, target_col)
         last_row = feat.iloc[-1:]
 
         X = last_row[FEATURE_COLS].values
