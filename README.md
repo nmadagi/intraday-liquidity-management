@@ -108,3 +108,13 @@ streamlit run app.py
 ---
 
 *Built by Nitin Madagi | Quantitative Risk & Finance*
+
+---
+
+## 👤 Author
+
+**Nitin Madagi** | [GitHub](https://github.com/nmadagi) | [Portfolio](https://nmadagi.github.io/portfolio)
+
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE).
