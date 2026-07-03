@@ -6,6 +6,8 @@ Python | Streamlit | Plotly | Scikit-learn | Pandas
 
 ---
 
+![Dashboard](docs/dashboard.png)
+
 ## Overview
 
 Enterprise-grade intraday liquidity management dashboard designed for monitoring, forecasting, and stress-testing USD payment flows across Fedwire, CHIPS, ACH, Fed Securities, and CCP margin channels.
