@@ -12,7 +12,7 @@ Python | Streamlit | Plotly | Scikit-learn | Pandas
 
 Enterprise-grade intraday liquidity management dashboard designed for monitoring, forecasting, and stress-testing USD payment flows across Fedwire, CHIPS, ACH, Fed Securities, and CCP margin channels.
 
-Built to demonstrate IDL management capabilities aligned with **BCBS 248** regulatory requirements and JPMorgan's Intraday Liquidity framework.
+Built around **BCBS 248** intraday liquidity monitoring requirements.
 
 ## Features
 

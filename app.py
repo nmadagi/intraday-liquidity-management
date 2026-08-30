@@ -1,7 +1,7 @@
 """
 app.py — Intraday Liquidity Management Dashboard v2
 =====================================================
-JPMorgan IDL Management — Senior Associate Interview Project
+Intraday liquidity analytics portfolio project
 Built with: Python | Streamlit | Plotly | Scikit-learn | Pandas
 
 Modules:
