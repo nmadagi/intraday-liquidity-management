@@ -1,5 +1,5 @@
 """
-playbook.py — IDL Playbook: Breach Response & Stress Scenarios
+playbook.py - IDL Playbook: Breach Response & Stress Scenarios
 ================================================================
 Scenario-driven playbook with:
   • Severity classification (Advisory / Elevated / Critical)
@@ -197,7 +197,7 @@ def generate_escalation_timeline(
     steps.append({
         "time": t0 + pd.Timedelta(minutes=2),
         "step": 2,
-        "action": "Validate — confirm not data/system error",
+        "action": "Validate - confirm not data/system error",
         "owner": "IDL Manager",
         "detail": "Cross-check IDL application, Fedwire, CHIPS dashboards.",
         "status": "Manual check",

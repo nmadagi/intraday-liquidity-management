@@ -1,4 +1,4 @@
-# 🏦 Intraday Liquidity Management — IDL Dashboard v2
+# Intraday Liquidity Management - IDL Dashboard v2
 
 **USD Central Bank Balance Monitoring | North America Treasury Funding**
 
@@ -16,17 +16,17 @@ Built around **BCBS 248** intraday liquidity monitoring requirements.
 
 ## Features
 
-### 📊 Executive Summary
+### Executive Summary
 - Real-time Fed reserve balance monitoring with intraday granularity
 - KPIs: current balance, min/max usage, total flows, balance distribution
 
-### 🔀 Channel & Business Line Analytics
+### Channel & Business Line Analytics
 - Per-channel volume breakdown (Fedwire, CHIPS, ACH, Fed Securities, CCP Margin)
 - Per-business-line flow analysis (Markets, Treasury, Commercial Banking, Asset Mgmt, Retail)
 - Intraday flow heatmap by channel and hour
 - Top counterparty exposure concentration
 
-### 📋 BCBS 248 Regulatory Monitoring
+### BCBS 248 Regulatory Monitoring
 - **Indicator 1:** Daily maximum intraday liquidity usage
 - **Indicator 2:** Available intraday liquidity
 - **Indicator 3:** Total payments (by channel)
@@ -34,7 +34,7 @@ Built around **BCBS 248** intraday liquidity monitoring requirements.
 - **Indicator 5:** Largest counterparty exposures
 - **Indicator 7:** Intraday throughput profile (% settled by hour)
 
-### 🔮 ML Forecasting Engine
+### ML Forecasting Engine
 - GradientBoosting model with 30+ engineered features
 - Calendar features (hour, day-of-week, month-end, quarter-end)
 - Cyclical encoding (sine/cosine for periodicity)
@@ -43,18 +43,18 @@ Built around **BCBS 248** intraday liquidity monitoring requirements.
 - 95% confidence intervals
 - Feature importance analysis
 
-### 🧪 Stress Scenarios
+### Stress Scenarios
 Six pre-defined operational scenarios:
-1. **Major Counterparty Payment Delay** — top-5 counterparty delays $3B+ inflows
-2. **CCP Variation Margin Spike** — 2x normal margin calls from market volatility
-3. **Payment System Operational Failure** — ACH batch processing delays
-4. **Broad Market Stress Event** — equity drop triggers cascading margin calls
-5. **Month-End Settlement Surge** — elevated settlement flows exceed forecast
-6. **Correspondent Bank Stress** — nostro settlement delays
+1. **Major Counterparty Payment Delay** - top-5 counterparty delays $3B+ inflows
+2. **CCP Variation Margin Spike** - 2x normal margin calls from market volatility
+3. **Payment System Operational Failure** - ACH batch processing delays
+4. **Broad Market Stress Event** - equity drop triggers cascading margin calls
+5. **Month-End Settlement Surge** - elevated settlement flows exceed forecast
+6. **Correspondent Bank Stress** - nostro settlement delays
 
 Custom stress adjustments on top of any scenario.
 
-### 🧭 IDL Playbook — Breach Response
+### IDL Playbook - Breach Response
 - Severity classification: Advisory / Elevated / Critical
 - Role-based escalation matrix
 - Projected balance with and without remediation actions
@@ -67,7 +67,7 @@ Realistic synthetic data generator mimicking real-world USD payment patterns:
 - **Fedwire:** RTGS, bimodal peaks at open and close
 - **CHIPS:** Multilateral netting, pre-funding AM, net settlement ~4:30 PM
 - **ACH:** Batch windows at 6 AM, 12 PM, 4 PM
-- **Fed Securities:** Treasury/agency settlement, 10 AM–2 PM concentration
+- **Fed Securities:** Treasury/agency settlement, 10 AM-2 PM concentration
 - **CCP Margin:** Variation margin, AM & PM windows
 
 Includes day-of-week effects, month-end/quarter-end surges, counterparty concentration, and time-critical obligation flags.
@@ -97,10 +97,10 @@ streamlit run app.py
 ## Tech Stack
 
 - **Python 3.10+**
-- **Streamlit** — interactive dashboard framework
-- **Plotly** — interactive visualizations
-- **Scikit-learn** — GradientBoosting forecasting model
-- **Pandas / NumPy** — data processing and feature engineering
+- **Streamlit** - interactive dashboard framework
+- **Plotly** - interactive visualizations
+- **Scikit-learn** - GradientBoosting forecasting model
+- **Pandas / NumPy** - data processing and feature engineering
 
 ## Regulatory References
 
@@ -113,10 +113,10 @@ streamlit run app.py
 
 ---
 
-## 👤 Author
+## Author
 
 **Nitin Madagi** | [GitHub](https://github.com/nmadagi) | [Portfolio](https://nmadagi.github.io/portfolio)
 
-## 📄 License
+## License
 
 This project is licensed under the [MIT License](LICENSE).

@@ -1,5 +1,5 @@
 """
-forecasting.py — Intraday Liquidity Forecasting Engine
+forecasting.py - Intraday Liquidity Forecasting Engine
 ========================================================
 Multi-model forecasting with proper feature engineering:
   • Seasonal features: hour-of-day, day-of-week, month-end, quarter-end
@@ -179,7 +179,7 @@ def forecast_forward(
 
     last_known_date = last_ts.date()
 
-    # Working history — only business-hour data (no zeros to pollute rolling calcs)
+    # Working history - only business-hour data (no zeros to pollute rolling calcs)
     work = last_known_df[["timestamp", target_col]].copy()
     work["timestamp"] = pd.to_datetime(work["timestamp"])
 

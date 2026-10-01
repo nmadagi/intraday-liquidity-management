@@ -1,5 +1,5 @@
 """
-generate_data.py — Realistic Intraday Liquidity Data Generator
+generate_data.py - Realistic Intraday Liquidity Data Generator
 ===============================================================
 Generates synthetic payment data that mirrors real-world USD payment patterns:
   • Fedwire: RTGS, heavy 9-11 AM & 3-5 PM, individual large-value payments
@@ -26,7 +26,7 @@ COUNTERPARTIES = [
     "CLS_Bank", "DTCC", "CME_Clearing", "ICE_Clear", "FICC"
 ]
 
-# Intraday profiles: (hour, relative_weight) — different shape per channel
+# Intraday profiles: (hour, relative_weight) - different shape per channel
 FEDWIRE_PROFILE = {
     8: 0.3, 9: 0.8, 10: 1.0, 11: 0.9, 12: 0.6, 13: 0.5,
     14: 0.7, 15: 0.9, 16: 1.0, 17: 0.7, 18: 0.2

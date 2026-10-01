@@ -1,16 +1,16 @@
 """
-app.py — Intraday Liquidity Management Dashboard v2
+app.py - Intraday Liquidity Management Dashboard v2
 =====================================================
 Intraday liquidity analytics portfolio project
 Built with: Python | Streamlit | Plotly | Scikit-learn | Pandas
 
 Modules:
-  1. Executive Summary — real-time balance, KPIs, alerts
-  2. Channel & LOB Analytics — per-channel and per-business-line views
-  3. BCBS 248 Monitoring — regulatory indicators dashboard
-  4. Forecasting Engine — ML-based forward projection
-  5. Stress Scenarios — pre-defined & custom what-if analysis
-  6. IDL Playbook — breach response simulation
+  1. Executive Summary - real-time balance, KPIs, alerts
+  2. Channel & LOB Analytics - per-channel and per-business-line views
+  3. BCBS 248 Monitoring - regulatory indicators dashboard
+  4. Forecasting Engine - ML-based forward projection
+  5. Stress Scenarios - pre-defined & custom what-if analysis
+  6. IDL Playbook - breach response simulation
 """
 
 import os
@@ -32,8 +32,7 @@ from playbook import (
 
 # ─── Page Config ──────────────────────────────────────────────────────────────
 st.set_page_config(
-    page_title="Intraday Liquidity Management — IDL Dashboard",
-    page_icon="🏦",
+    page_title="Intraday Liquidity Management - IDL Dashboard",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -98,7 +97,7 @@ def load_data():
 
 
 def train_model(bal_csv_path):
-    """Train model fresh each session — ensures latest forecasting.py is always used."""
+    """Train model fresh each session - ensures latest forecasting.py is always used."""
     bal_df = pd.read_csv(bal_csv_path, parse_dates=["timestamp"])
     model, feat_df, metrics, importance = train_forecast_model(bal_df, target_col="total_net")
     return model, feat_df, metrics, importance
@@ -142,19 +141,19 @@ with st.sidebar:
 
 
 # ─── Title ────────────────────────────────────────────────────────────────────
-st.title("🏦 Intraday Liquidity Management — IDL Dashboard")
+st.title("Intraday Liquidity Management - IDL Dashboard")
 st.caption("North America Treasury Funding | USD Central Bank Balance Monitoring")
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # TABS
 # ═══════════════════════════════════════════════════════════════════════════════
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
-    "📊 Executive Summary",
-    "🔀 Channel & LOB Analytics",
-    "📋 BCBS 248 Monitoring",
-    "🔮 Forecasting Engine",
-    "🧪 Stress Scenarios",
-    "🧭 IDL Playbook",
+    "Executive Summary",
+    "Channel & LOB Analytics",
+    "BCBS 248 Monitoring",
+    "Forecasting Engine",
+    "Stress Scenarios",
+    "IDL Playbook",
 ])
 
 
@@ -198,7 +197,7 @@ with tab1:
             fig_bal.add_hline(y=avg_bal, line=dict(color="gray", dash="dash", width=1),
                               annotation_text=f"Avg: ${avg_bal/1e9:.1f}B")
             fig_bal.update_layout(
-                title="Fed Reserve Balance — Intraday",
+                title="Fed Reserve Balance - Intraday",
                 yaxis_title="USD",
                 height=400,
                 margin=dict(l=20, r=20, t=40, b=20),
@@ -338,7 +337,7 @@ with tab2:
 # TAB 3: BCBS 248 MONITORING
 # ═══════════════════════════════════════════════════════════════════════════════
 with tab3:
-    st.subheader("BCBS 248 — Intraday Liquidity Monitoring Indicators")
+    st.subheader("BCBS 248 - Intraday Liquidity Monitoring Indicators")
     st.caption("Basel Committee on Banking Supervision | Monitoring Tools for Intraday Liquidity Management (2013)")
 
     bcbs = generate_bcbs248_summary(pmt_filtered, bal_filtered)
@@ -411,7 +410,7 @@ with tab3:
 # TAB 4: FORECASTING ENGINE
 # ═══════════════════════════════════════════════════════════════════════════════
 with tab4:
-    st.subheader("ML Forecasting Engine — Net Flow Prediction")
+    st.subheader("ML Forecasting Engine - Net Flow Prediction")
     st.caption("GradientBoosting model with 30+ engineered features (calendar, cyclical, rolling, lagged)")
 
     col_train, col_forecast = st.columns([1, 3])
@@ -435,19 +434,19 @@ with tab4:
 
         # Feature descriptions
         _feature_desc = {
-            "roll_mean_4": "Avg net flow over last 1hr — strongest momentum signal",
-            "roll_std_4": "Flow volatility over last 1hr — drives confidence interval width",
-            "roll_max_4": "Largest single flow in last 1hr — detects recent payment spikes",
-            "roll_min_4": "Smallest flow in last 1hr — flags recent large outflows",
-            "lag_2d": "Net flow at this exact time 2 days ago — captures multi-day rhythm",
-            "minute_of_day": "Position in trading day (0→1) — 10AM behaves differently than 3PM",
-            "roll_std_8": "Flow volatility over last 2hrs — broader volatility context",
-            "roll_mean_8": "Avg net flow over last 2hrs — medium-term trend direction",
-            "roll_mean_32": "Avg net flow over last 8hrs — full-day directional bias",
-            "minute": "Minute within the hour (0/15/30/45) — sub-hour activity patterns",
-            "roll_mean_16": "Avg net flow over last 4hrs — half-day trend",
-            "roll_max_8": "Largest flow in last 2hrs — extended spike detection",
-            "roll_min_8": "Smallest flow in last 2hrs — extended outflow detection",
+            "roll_mean_4": "Avg net flow over last 1hr - strongest momentum signal",
+            "roll_std_4": "Flow volatility over last 1hr - drives confidence interval width",
+            "roll_max_4": "Largest single flow in last 1hr - detects recent payment spikes",
+            "roll_min_4": "Smallest flow in last 1hr - flags recent large outflows",
+            "lag_2d": "Net flow at this exact time 2 days ago - captures multi-day rhythm",
+            "minute_of_day": "Position in trading day (0→1) - 10AM behaves differently than 3PM",
+            "roll_std_8": "Flow volatility over last 2hrs - broader volatility context",
+            "roll_mean_8": "Avg net flow over last 2hrs - medium-term trend direction",
+            "roll_mean_32": "Avg net flow over last 8hrs - full-day directional bias",
+            "minute": "Minute within the hour (0/15/30/45) - sub-hour activity patterns",
+            "roll_mean_16": "Avg net flow over last 4hrs - half-day trend",
+            "roll_max_8": "Largest flow in last 2hrs - extended spike detection",
+            "roll_min_8": "Smallest flow in last 2hrs - extended outflow detection",
             "roll_max_16": "Largest flow in last 4hrs",
             "roll_min_16": "Smallest flow in last 4hrs",
             "roll_std_16": "Volatility over last 4hrs",
@@ -455,41 +454,41 @@ with tab4:
             "roll_min_32": "Smallest flow in last 8hrs",
             "roll_std_32": "Volatility over last 8hrs",
             "lag_1d": "Net flow at this time yesterday",
-            "lag_5d": "Net flow at this time last week — weekly seasonality",
+            "lag_5d": "Net flow at this time last week - weekly seasonality",
             "hour": "Hour of day (6-18)",
             "day_of_week": "Day of week (0=Mon, 4=Fri)",
-            "day_of_month": "Day of month — month-end proximity",
+            "day_of_month": "Day of month - month-end proximity",
             "month": "Month of year",
-            "is_monday": "Monday flag — typically lighter volumes",
-            "is_friday": "Friday flag — typically lighter volumes",
-            "is_month_end": "Last business day of month — 40-60% volume surge",
-            "days_to_month_end": "Days until month end — gradual ramp-up",
-            "is_quarter_end": "Quarter-end flag — extra volume on top of month-end",
-            "hour_sin": "Cyclical hour encoding (sine) — captures periodicity",
-            "hour_cos": "Cyclical hour encoding (cosine) — captures periodicity",
+            "is_monday": "Monday flag - typically lighter volumes",
+            "is_friday": "Friday flag - typically lighter volumes",
+            "is_month_end": "Last business day of month - 40-60% volume surge",
+            "days_to_month_end": "Days until month end - gradual ramp-up",
+            "is_quarter_end": "Quarter-end flag - extra volume on top of month-end",
+            "hour_sin": "Cyclical hour encoding (sine) - captures periodicity",
+            "hour_cos": "Cyclical hour encoding (cosine) - captures periodicity",
             "dow_sin": "Cyclical day-of-week encoding (sine)",
             "dow_cos": "Cyclical day-of-week encoding (cosine)",
-            "cum_daily_net": "Cumulative net flow so far today — intraday position",
+            "cum_daily_net": "Cumulative net flow so far today - intraday position",
         }
 
-        # Metrics row — 4 columns with help tooltips
+        # Metrics row - 4 columns with help tooltips
         st.markdown("#### Model Performance")
         m1, m2, m3, m4 = st.columns(4)
         m1.metric(
             "Train MAE", f"${metrics['train_mae']/1e6:.2f}M",
-            help="Average prediction error on training data — how well the model learned historical patterns"
+            help="Average prediction error on training data - how well the model learned historical patterns"
         )
         m2.metric(
             "Test MAE", f"${metrics['test_mae']/1e6:.2f}M",
-            help="Average prediction error on unseen data — the real measure of forecast accuracy in production"
+            help="Average prediction error on unseen data - the real measure of forecast accuracy in production"
         )
         m3.metric(
             "Test RMSE", f"${metrics['test_rmse']/1e6:.2f}M",
-            help="Penalizes large errors more than MAE — shows worst-case forecast misses during unusual events like month-end"
+            help="Penalizes large errors more than MAE - shows worst-case forecast misses during unusual events like month-end"
         )
         m4.metric(
             "Train/Test Split", f"{metrics['train_size']:,} / {metrics['test_size']:,}",
-            help="85% data for training, 15% held out for testing — time-based split so no future data leaks into training"
+            help="85% data for training, 15% held out for testing - time-based split so no future data leaks into training"
         )
 
         st.divider()
@@ -535,8 +534,8 @@ with tab4:
         st.session_state["forecast_df"] = fc
         st.session_state["model"] = model
 
-        # Feature importance — full width with descriptions
-        st.markdown("#### Top Features — What Drives the Forecast")
+        # Feature importance - full width with descriptions
+        st.markdown("#### Top Features - What Drives the Forecast")
         imp_display = importance.head(10).copy()
         imp_display["description"] = imp_display["feature"].map(_feature_desc).fillna("")
         imp_display["importance"] = imp_display["importance"].apply(lambda x: f"{x:.4f} ({x*100:.1f}%)")
@@ -713,7 +712,7 @@ with tab5:
 # TAB 6: IDL PLAYBOOK
 # ═══════════════════════════════════════════════════════════════════════════════
 with tab6:
-    st.subheader("IDL Playbook — Breach Response Simulation")
+    st.subheader("IDL Playbook - Breach Response Simulation")
 
     if "stressed_df" not in st.session_state:
         st.warning("Run a stress scenario first (Tab 5) to populate the playbook.")
@@ -732,7 +731,7 @@ with tab6:
         st.markdown(
             f'<div style="background:{sev_config["color"]}; color:white; padding:12px; '
             f'border-radius:6px; font-size:18px; font-weight:bold;">'
-            f'Severity: {severity} — {sev_config["description"]}'
+            f'Severity: {severity} - {sev_config["description"]}'
             f'</div>',
             unsafe_allow_html=True,
         )

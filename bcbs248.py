@@ -1,5 +1,5 @@
 """
-bcbs248.py — BCBS 248 Intraday Liquidity Monitoring Indicators
+bcbs248.py - BCBS 248 Intraday Liquidity Monitoring Indicators
 ================================================================
 Implements the 7 quantitative monitoring tools defined by the
 Basel Committee on Banking Supervision (BCBS 248, April 2013):
@@ -10,7 +10,7 @@ Basel Committee on Banking Supervision (BCBS 248, April 2013):
 4. Time-specific obligations
 5. Value of payments made on behalf of FMI participants (correspondent)
 6. Intraday credit lines extended (to customers)
-7. Intraday throughput (timing of payments — % settled by hour)
+7. Intraday throughput (timing of payments - % settled by hour)
 
 Reference: "Monitoring tools for intraday liquidity management"
            Basel Committee on Banking Supervision, April 2013
@@ -122,7 +122,7 @@ def compute_time_specific_obligations(payment_df: pd.DataFrame) -> pd.DataFrame:
 def compute_largest_counterparty_exposures(payment_df: pd.DataFrame, top_n: int = 5) -> pd.DataFrame:
     """
     Indicator 5/6: Largest intraday bilateral exposures.
-    Shows net exposure to each counterparty — identifies concentration risk.
+    Shows net exposure to each counterparty - identifies concentration risk.
     """
     pmt = payment_df.copy()
     pmt["timestamp"] = pd.to_datetime(pmt["timestamp"])
@@ -149,7 +149,7 @@ def compute_largest_counterparty_exposures(payment_df: pd.DataFrame, top_n: int 
 
 def compute_throughput(payment_df: pd.DataFrame) -> pd.DataFrame:
     """
-    Indicator 7: Intraday throughput — cumulative % of daily payments
+    Indicator 7: Intraday throughput - cumulative % of daily payments
     settled by each hour. Regulators want to see payments spread
     throughout the day, not concentrated at close.
     """
